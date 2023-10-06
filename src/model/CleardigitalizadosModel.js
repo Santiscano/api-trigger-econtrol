@@ -3,7 +3,7 @@ import { connection, connect } from "../configs/mySQL.js";
 class CleardigitalizadosModel {
   getpedidosNumeracionPagadosModel = async () => {
     const [query] = await connection.query(
-      "SELECT CONSECUTIVO FROM TB_NUMERACIONES_COMPROBANTES_GENERADOS WHERE ESTADO =5 AND TOTAL_ABONO > 0 AND LIMPIEZA = 1"
+      "SELECT CONSECUTIVO FROM TB_NUMERACIONES_COMPROBANTES_GENERADOS WHERE ESTADO =5 AND TOTAL_ABONO > 0 AND LIMPIEZA = 1 LIMIT 80"
     );
     return query;
   };
