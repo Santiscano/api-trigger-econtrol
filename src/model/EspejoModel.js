@@ -2,7 +2,7 @@ import { connection, connect } from "../configs/mySQL.js";
 
 class EspejoModel {
   getTriggerModel = async () => {
-    const [query] = await connection.query("SELECT * FROM TB_PEDIDOS_TRIGGRER LIMIT 1000");
+    const [query] = await connection.query("SELECT * FROM TB_PEDIDOS_TRIGGER LIMIT 30000");
     return query;
   };
 
@@ -17,7 +17,7 @@ class EspejoModel {
 
   deleteTriggerModel = async (barcode) => {
     const [query] = await connection.query(
-      "DELETE FROM TB_PEDIDOS_TRIGGRER WHERE TB_PEDIDOS_BARCODE_CAJA IN (?)",
+      "DELETE FROM TB_PEDIDOS_TRIGGER WHERE TB_PEDIDOS_BARCODE_CAJA IN (?)",
       [barcode]
     );
 
@@ -163,7 +163,7 @@ class EspejoModel {
 
   getPedidosDigitalizadosModel = async () => {
     const [query] = await connection.query(
-      "INSERT INTO TB_PEDIDOS_TRIGGRER SELECT * FROM TB_PEDIDOS_DIGITALIZADO WHERE 1"
+      "INSERT INTO TB_PEDIDOS_TRIGGER SELECT * FROM TB_PEDIDOS_DIGITALIZADO WHERE 1"
     );
     return query;
   };
