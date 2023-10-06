@@ -166,18 +166,18 @@ class EspejoController {
     }
   };
 
-  pedidosDigitalizadosController = async (req, res) => {
-    try {
-      const data = await this.EspejoModel.getPedidosDigitalizadosModel();
-      if (data) {
-        return res.success("datos",data)
-      }
-      return res.status(200).json({ message: "error" });
-    } catch (error) {
-      console.log(error);
-      return res.json({ message: "Ocurrrio un error " + error });
-    }
-  };
+  // pedidosDigitalizadosController = async (req, res) => {
+  //   try {
+  //     const data = await this.EspejoModel.getPedidosDigitalizadosModel();
+  //     if (data) {
+  //       return res.success("datos",data)
+  //     }
+  //     return res.status(200).json({ message: "error" });
+  //   } catch (error) {
+  //     console.log(error);
+  //     return res.json({ message: "Ocurrrio un error " + error });
+  //   }
+  // };
 
   // putEspejoController = async (req, res) => {
   //   try {

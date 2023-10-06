@@ -7,8 +7,8 @@ const espejoController = new EspejoController();
 const cleardigitalizadosController = new CleardigitalizadosController();
 
 router.get("/test-api", espejoController.getTriggerController);
-router.get("/pedidos-digitalizados", espejoController.pedidosDigitalizadosController);
 router.get("/test-clear", cleardigitalizadosController.functionMigration);
+// router.get("/pedidos-digitalizados", espejoController.pedidosDigitalizadosController);
 
 
 export default router;
