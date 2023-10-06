@@ -2,7 +2,7 @@ import { connection, connect } from "../configs/mySQL.js";
 
 class EspejoModel {
   getTriggerModel = async () => {
-    const [query] = await connection.query("SELECT * FROM TB_PEDIDOS_TRIGGRER");
+    const [query] = await connection.query("SELECT * FROM TB_PEDIDOS_TRIGGRER LIMIT 1000");
     return query;
   };
 
