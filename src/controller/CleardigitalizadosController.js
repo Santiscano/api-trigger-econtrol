@@ -6,7 +6,9 @@ class CleardigitalizadosController {
 
   functionMigration = async (req, res) => {
     const data =
-      await this.CleardigitalizadosModel.getpedidosNumeracionPagadosModel();
+      await this.CleardigitalizadosModel.getpedidosNumeracionPagadosModel().catch(
+        (e) => console.log("fallo getpedidosNumeracionPagadosModel")
+      );
     if (data) {
       const result = data.map((key) => key.CONSECUTIVO);
       const tiene_pedidos = [];
@@ -15,14 +17,16 @@ class CleardigitalizadosController {
           const result_getpedidos =
             await this.CleardigitalizadosModel.getPedidosPagadosMadreModel(
               element
-            );
+            ).catch((e) => console.log("fallo getPedidosPagadosMadreModel"));
 
           if (result_getpedidos.length === 0) {
             console.log({ "no tiene pedidos ": element });
-            this.CleardigitalizadosModel.updateEmptyAuthPagadosMomModel(
-              element
-            ).then((res) => console.log(res));
-          } else {
+            this.CleardigitalizadosModel.updateEmptyAuthPagadosMomModel(element)
+              .then((res) => console.log(res))
+              .catch((e) =>
+                console.log({ "fallo updateEmptyAuthPagadosMomModel": e })
+              );
+           } else {
             console.log({ "tiene pedidos ": element });
             tiene_pedidos.push(element);
           }
@@ -156,10 +160,12 @@ class CleardigitalizadosController {
             codigos.NTF_DIGITALIZADO,
           ];
         });
-        this.CleardigitalizadosModel.InsertEspejo(result_Data).then((res) =>
-          console.log("insertados correctamente")
-        );
-
+        const result_insert = await this.CleardigitalizadosModel.InsertEspejo(
+          result_Data
+        ).catch((e) => console.log({ "fallo el insert ": e }));
+        // if (result_insert.affectedRows === 0) {
+        //   return console.log("no inserto");
+        // }
         const response_espejo =
           await this.CleardigitalizadosModel.getTBpedidosPagadosModel(
             tiene_pedidos
@@ -169,6 +175,10 @@ class CleardigitalizadosController {
             tiene_pedidos
           );
 
+        console.log({
+          data_espejo: response_espejo.length,
+          data_madre: response_mom.length,
+        });
         if (response_espejo.length === response_mom.length) {
           this.CleardigitalizadosModel.deletePedidosPagadosMadreModel(
             tiene_pedidos
