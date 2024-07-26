@@ -8,6 +8,9 @@ const espejoController = new EspejoController();
 const cleardigitalizadosController = new CleardigitalizadosController();
 const clearhistryController = new ClearhistryController();
 
+router.get("/", (req, res) => {
+    res.send("Hello World");
+});
 router.get("/test-api", espejoController.getTriggerController);
 router.get("/test-clear", cleardigitalizadosController.functionMigration);
 router.get("/test-history", clearhistryController.getClearhistryController);

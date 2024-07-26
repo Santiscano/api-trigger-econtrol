@@ -179,9 +179,9 @@ class ClearhistryController {
         if (response_espejo.length === response_mom.length) {
           this.ClearhistryModel.deletePedidosPagadosMadreModel(
             tiene_pedidos
-          ).then((res) => console.log({ borrados: res.affectedRows }));
+          ).then((response) => console.log({ borrados: response.affectedRows }));
           this.ClearhistryModel.updateAuthPagadosMomModel(tiene_pedidos).then(
-            (res) => console.log({ actualizados: res.affectedRows })
+            (response) => console.log({ actualizados: response.affectedRows })
           );
           return res.success("si se termino el proceso ");
         }

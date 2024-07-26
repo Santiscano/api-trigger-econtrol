@@ -182,10 +182,10 @@ class CleardigitalizadosController {
         if (response_espejo.length === response_mom.length) {
           this.CleardigitalizadosModel.deletePedidosPagadosMadreModel(
             tiene_pedidos
-          ).then((res) => console.log({ borrados: res.affectedRows }));
+          ).then((response) => console.log({ borrados: response.affectedRows }));
           this.CleardigitalizadosModel.updateAuthPagadosMomModel(
             tiene_pedidos
-          ).then((res) => console.log({ actualizados: res.affectedRows }));
+          ).then((response) => console.log({ actualizados: response.affectedRows }));
           return res.success("si se termino el proceso ");
         }
 

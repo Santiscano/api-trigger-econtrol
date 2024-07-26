@@ -1,4 +1,5 @@
 import EspejoModel from "../model/EspejoModel.js";
+
 class EspejoController {
   constructor() {
     this.EspejoModel = new EspejoModel();
@@ -6,21 +7,21 @@ class EspejoController {
 
   getTriggerController = async (req, res) => {
     try {
-      const data = await this.EspejoModel.getTriggerModel();
+      const data = await this.EspejoModel.getTriggerModel(); // trae toda la data
 
       if (data) {
-        const result_barcodes = data.map((key) => key.TB_PEDIDOS_BARCODE_CAJA);
+        const result_barcodes = data.map((key) => key.TB_PEDIDOS_BARCODE_CAJA); // toma solo la columna barcodes
 
-        const result_espejo = await this.EspejoModel.getEspejoModel(
+        const result_espejo = await this.EspejoModel.getEspejoModel( // trae data si tiene barcode
           result_barcodes
         );
 
-        const result_data_insert = data.filter(
+        const result_data_insert = data.filter( // retorna los datos que deben ser insertados porque no estan
           (key) =>
             !result_espejo.some((key2) => key2.CODIGO_PK === key.CODIGO_PK)
         );
 
-        const result_Data = result_data_insert.map((codigos) => {
+        const result_Data = result_data_insert.map((codigos) => { // transforma la data
           return [
             codigos.CODIGO_PK,
             codigos.TB_PEDIDOS_NIT,
@@ -144,19 +145,19 @@ class EspejoController {
           ];
         });
         if (result_Data.length > 0) {
-          await this.EspejoModel.InsertEspejo(result_Data);
+          await this.EspejoModel.InsertEspejo(result_Data); // inserta en el espejo
         }
 
-        const result_data_update = data.filter((key) =>
-          result_espejo.some((key2) => key2.CODIGO_PK === key.CODIGO_PK)
+        const result_data_update = data.filter((key) => // filtra data a actualizar
+          result_espejo.some((key2) => key2.CODIGO_PK === key.CODIGO_PK) 
         );
 
-        const promises = result_data_update.map((item) =>
+        const promises = result_data_update.map((item) => // genera una promesa
           this.EspejoModel.updateEspejo(item)
         );
-        await Promise.all(promises);
+        await Promise.all(promises); // ejecuta la promesa
 
-        await this.EspejoModel.deleteTriggerModel(result_barcodes);
+        await this.EspejoModel.deleteTriggerModel(result_barcodes); // elimina data del trigger
         return res.success("Proceso finalizado correctamente");
       }
       return res.error("no existen datos en la tabla ");
