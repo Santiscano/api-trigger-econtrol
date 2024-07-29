@@ -11,10 +11,9 @@ const clearhistryController = new ClearhistryController();
 router.get("/", (req, res) => {
     res.send("Hello World");
 });
-router.get("/test-api", espejoController.getTriggerController);
-router.get("/test-clear", cleardigitalizadosController.functionMigration);
-router.get("/test-history", clearhistryController.getClearhistryController);
-// router.get("/pedidos-digitalizados", espejoController.pedidosDigitalizadosController);
+// router.get("/test-api", espejoController.getTriggerController);
+router.get("/clean-tb-pedidos-giditalizado", cleardigitalizadosController.functionMigration);
+router.get("/clean-tb-preliquidacion-tmp-historico", clearhistryController.getClearhistryController);
 
 
 export default router;
