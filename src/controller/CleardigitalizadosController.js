@@ -5,37 +5,44 @@ class CleardigitalizadosController {
   }
 
   functionMigration = async (req, res) => {
-    const data =
-      await this.CleardigitalizadosModel.getpedidosNumeracionPagadosModel().catch(
-        (e) => console.log("fallo getpedidosNumeracionPagadosModel")
-      );
+    // *trae los consecutivos
+    const data = await this.CleardigitalizadosModel.getpedidosNumeracionPagadosModel()
+    .catch((e) => res.status(401).json({ message: "fallo getpedidosNumeracionPagadosModel" }));
+    console.log('consecutivos', data);
+    
     if (data) {
-      const result = data.map((key) => key.CONSECUTIVO);
+      const consecutivos = data.map((key) => key.CONSECUTIVO);
       const tiene_pedidos = [];
-      if (result.length > 0) {
-        for (const element of result) {
-          const result_getpedidos =
-            await this.CleardigitalizadosModel.getPedidosPagadosMadreModel(
-              element
-            ).catch((e) => console.log("fallo getPedidosPagadosMadreModel"));
+      const comprobantes_actualizados = [];
+      const comprobantes_sin_actualizar = [];
+      if (consecutivos.length > 0) {
+        for (const element of consecutivos) {
+          // *trae los pedidos de la madre
+          console.log('ciclo consecutivos', element);
+          const result_getPreliquidacionesPagadas = await this.CleardigitalizadosModel.getPreliquidacionesPagadasMadreModel(element)
 
-          if (result_getpedidos.length === 0) {
+          if (result_getPreliquidacionesPagadas.length === 0) {
             console.log({ "no tiene pedidos ": element });
-            this.CleardigitalizadosModel.updateEmptyAuthPagadosMomModel(element)
-              .then((res) => console.log(res))
-              .catch((e) =>
-                console.log({ "fallo updateEmptyAuthPagadosMomModel": e })
-              );
-           } else {
-            console.log({ "tiene pedidos ": element });
+            // *actualiza los consecutivos que no tienen pedidos
+            await this.CleardigitalizadosModel.updateEmptyAuthPagadosMomModel(element)
+              .then((response) => comprobantes_actualizados.push(element))
+              .catch((e) => comprobantes_sin_actualizar.push(element));
+          } else {
             tiene_pedidos.push(element);
           }
         }
 
-        const getAll_pedidos =
-          await this.CleardigitalizadosModel.getAllPedidosPagadosMadreModel(
-            tiene_pedidos
-          );
+        console.log('consecutivos con pedidos', tiene_pedidos);
+        if (tiene_pedidos.length === 0) {
+          return res.status(401).json({
+            message: "no hay pedidos",
+            data,
+            tiene_pedidos,
+          });
+        }
+        // *trae todos los pedidos de la madre
+        const getAll_pedidos = await this.CleardigitalizadosModel.getAllPedidosPagadosMadreModel(tiene_pedidos);
+        console.log('cantidad pedidos madre', getAll_pedidos.length);
 
         const result_Data = getAll_pedidos.map((codigos) => {
           return [
@@ -160,43 +167,77 @@ class CleardigitalizadosController {
             codigos.NTF_DIGITALIZADO,
           ];
         });
-        const result_insert = await this.CleardigitalizadosModel.InsertEspejo(
-          result_Data
-        ).catch((e) => console.log({ "fallo el insert ": e }));
-        // if (result_insert.affectedRows === 0) {
-        //   return console.log("no inserto");
-        // }
-        const response_espejo =
-          await this.CleardigitalizadosModel.getTBpedidosPagadosModel(
-            tiene_pedidos
-          );
-        const response_mom =
-          await this.CleardigitalizadosModel.getPedidosPagadosVerifyMadreModel(
-            tiene_pedidos
-          );
+        // *insertar datos en espejo
+        const result_insert = await this.CleardigitalizadosModel.InsertEspejo(result_Data)
+        .catch((e) => res.status(401).json({
+          message: "fallo InsertEspejo", 
+          data
+        }));
+        console.log('result_insert', result_insert);
+
+        console.log('tiene_pedidos', tiene_pedidos);
+        const num_pedidos = tiene_pedidos.map(item => `'${item}'`).join(',');
+        console.log('num_pedidos', num_pedidos);
+        const pedidos_barcode_caja = await this.CleardigitalizadosModel.getTBpedidosPagadosModel(num_pedidos);
+        console.log('pedidos_barcode_caja', pedidos_barcode_caja.length);
+        let uniqueArr1 = getAll_pedidos.filter(item => 
+          !pedidos_barcode_caja.some(element => 
+            item.TB_PEDIDOS_BARCODE_CAJA === element.TB_PEDIDOS_BARCODE_CAJA
+          )
+        );
+        uniqueArr1 = uniqueArr1.map((key) => key.TB_PEDIDOS_BARCODE_CAJA);
+        let uniqueArr2 = pedidos_barcode_caja.filter(item =>
+          !getAll_pedidos.some(element =>
+            item.TB_PEDIDOS_BARCODE_CAJA === element.TB_PEDIDOS_BARCODE_CAJA
+          )
+        );
+        uniqueArr2 = uniqueArr2.map((key) => key.TB_PEDIDOS_BARCODE_CAJA);
+        const unionArr = [...uniqueArr1, ...uniqueArr2];
+        console.log('pedidos que no estan en ambos lados', unionArr);
+        const response_mom = await this.CleardigitalizadosModel.getPedidosPagadosVerifyMadreModel(tiene_pedidos);
 
         console.log({
-          data_espejo: response_espejo.length,
+          data_espejo: pedidos_barcode_caja.length,
           data_madre: response_mom.length,
         });
-        if (response_espejo.length === response_mom.length) {
-          this.CleardigitalizadosModel.deletePedidosPagadosMadreModel(
-            tiene_pedidos
-          ).then((response) => console.log({ borrados: response.affectedRows }));
-          this.CleardigitalizadosModel.updateAuthPagadosMomModel(
-            tiene_pedidos
-          ).then((response) => console.log({ actualizados: response.affectedRows }));
-          return res.success("si se termino el proceso ");
-        }
+        // *compara la cantidad de datos y si son iguales borra los pedidos de la madre y actualiza los consecutivos
+        if (pedidos_barcode_caja.length === response_mom.length) {
+          // *elimina los pedidos de la madre
+          const resEliminados = await this.CleardigitalizadosModel.deletePedidosPagadosMadreModel(tiene_pedidos);
+          // *actualiza los consecutivos para indicar se eliminaron los pedidos
+          const resActualizados = await this.CleardigitalizadosModel.updateAuthPagadosMomModel(tiene_pedidos);
 
-        return res.error(
-          "no se finalizo el proceso cantidad de datos diferentes"
-        );
+          console.log('eliminados', resEliminados);
+          console.log('actualizados', resActualizados);
+          const dataResponse = {
+            data,
+            comprobantes_actualizados,
+            comprobantes_sin_actualizar,
+            result_insert,
+            resEliminados,
+            resActualizados,
+          }
+          return res.status(200).json({
+            message: "proceso finalizado", 
+            data: dataResponse
+          });
+        }
+        return res.status(401).json({
+          message: "no se finalizo el proceso cantidad de datos diferentes", 
+          data
+        });
       } else {
-        return res.json("no hay consecutivos");
+        return res.status(401).json({
+          message: "no hay consecutivos",
+          data,
+        });
       }
+    } else {
+      return res.status(401).json({
+        message: "no hay data disponible",
+        data,
+      });
     }
-    res.error("no hay data disponible");
   };
 }
 

@@ -23,13 +23,13 @@ app.use(upload.any());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
-app.use(globalFuncMiddleware);
+// app.use(globalFuncMiddleware);
 
 // RUTAS
 // ROUTER INDEX
-app.use("/", (req, res) => {
-  res.json({ message: "Welcome to index" });
-});
+// app.use("/", (req, res) => {
+//   res.json({ message: "Welcome to index" });
+// });
 app.use("/api/", router);
 
 app.get("/archivos1/:archivo", (req, res) => {
@@ -42,7 +42,7 @@ app.get("/archivos1/:archivo", (req, res) => {
 
 
 // PUERTO DEL SERVIDOR LOCAL
-app.set("port", process.env.PORT || 3000);
+app.set("port", process.env.PORT || 3001);
 
 // INICIAR EL SERVIDOR http://
 app.listen(app.get("port"), () => {

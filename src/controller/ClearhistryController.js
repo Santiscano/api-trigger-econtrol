@@ -6,37 +6,29 @@ class ClearhistryController {
 
   getClearhistryController = async (req, res) => {
     try {
-      const data =
-        await this.ClearhistryModel.getpedidosNumeracionPagadosModel();
+      const data = await this.ClearhistryModel.getpedidosNumeracionPagadosModel()
+      .catch((e) => res.status(401).json({message: "fallo getpedidosNumeracionPagadosModel"}));
 
       if (data) {
-        const response_consecutivos = data.map(
-          (consecutivos) => consecutivos.CONSECUTIVO
-        );
+        const response_consecutivos = data.map((consecutivos) => consecutivos.CONSECUTIVO);
         const tiene_pedidos = [];
+        const comprobantes_actualizados = [];
+        const comprobantes_sin_actualizar = [];
         for (const element of response_consecutivos) {
-          const result_getpedidos =
-            await this.ClearhistryModel.getTBpedidosPagadosModel(element).catch(
-              (e) => console.log("fallo getTBpedidosPagadosModel")
-            );
+          const result_getpedidos = await this.ClearhistryModel.getTBpedidosPagadosModel(element)
+          .catch((e) => res.status(401).json({message: "fallo getTBpedidosPagadosModel"}));
 
           if (result_getpedidos.length === 0) {
             console.log({ "no tiene pedidos ": element });
-            this.ClearhistryModel.updateEmptyAuthPagadosMomModel(element)
-              .then((res) => console.log(res))
-              .catch((e) =>
-                console.log({ "fallo updateEmptyAuthPagadosMomModel": e })
-              );
+            await this.ClearhistryModel.updateEmptyAuthPagadosMomModel(element)
+              .then((res) => comprobantes_actualizados.push(element))
+              .catch((e) => comprobantes_sin_actualizar.push(element));
           } else {
-            console.log({ "tiene pedidos ": element });
             tiene_pedidos.push(element);
           }
         }
 
-        const getAll_pedidos =
-          await this.ClearhistryModel.getAllPedidosPagadosMadreModel(
-            tiene_pedidos
-          );
+        const getAll_pedidos = await this.ClearhistryModel.getAllPedidosPagadosMadreModel(tiene_pedidos);
 
         const result_Data = getAll_pedidos.map((codigos) => {
           return [
@@ -161,39 +153,35 @@ class ClearhistryController {
             codigos.NTF_DIGITALIZADO,
           ];
         });
-        await this.ClearhistryModel.InsertEspejo(result_Data).catch((e) =>
+        const resultInsert = await this.ClearhistryModel.InsertEspejo(result_Data).catch((e) =>
           console.log({ "fallo el insert ": e })
         );
 
-        const response_espejo =
-          await this.ClearhistryModel.getTBpedidosPagadosModel(tiene_pedidos);
-        const response_mom =
-          await this.ClearhistryModel.getPedidosPagadosVerifyMadreModel(
-            tiene_pedidos
-          );
+        const response_espejo = await this.ClearhistryModel.getTBpedidosPagadosModel(tiene_pedidos);
+        const response_mom = await this.ClearhistryModel.getPedidosPagadosVerifyMadreModel(tiene_pedidos);
+        
         console.log({
           data_espejo: response_espejo.length,
           data_madre: response_mom.length,
         });
-
         if (response_espejo.length === response_mom.length) {
-          this.ClearhistryModel.deletePedidosPagadosMadreModel(
-            tiene_pedidos
-          ).then((response) => console.log({ borrados: response.affectedRows }));
-          this.ClearhistryModel.updateAuthPagadosMomModel(tiene_pedidos).then(
-            (response) => console.log({ actualizados: response.affectedRows })
-          );
-          return res.success("si se termino el proceso ");
-        }
-        return res.error(
-          "no se finalizo el proceso cantidad de datos diferentes"
-        );
-      }
+          const resEliminados = await this.ClearhistryModel.deletePedidosPagadosMadreModel(tiene_pedidos);
+          const resActualizados = await this.ClearhistryModel.updateAuthPagadosMomModel(tiene_pedidos);
 
-      res.error("no hay data disponible");
+          const dataResponse = {
+            comprobantes_actualizados,
+            comprobantes_sin_actualizar,
+            resultInsert,
+            resEliminados,
+            resActualizados,
+          }
+          return res.status(200).json({ message: "proceso finalizado", dataResponse });
+        }
+        return res.status(401).json({ message: "no se finalizo el proceso cantidad de datos diferentes" });
+      }
+      return res.status(401).json({ message: "no hay data disponible" });
     } catch (error) {
-      console.log(error);
-      return res.json({ message: "Ocurrrio un error " + error });
+      return res.status(401).json({ message: "Ocurrrio un error " + error });
     }
   };
 }

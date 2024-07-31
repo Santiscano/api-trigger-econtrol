@@ -5,6 +5,11 @@ class EspejoController {
     this.EspejoModel = new EspejoModel();
   }
 
+  testApi = async (req, res) => {
+    // return res.status(401).json({ message: "test 401" });
+    return res.status(200).json({ message: "test 200", data: ['funciona'] });
+  }
+
   getTriggerController = async (req, res) => {
     try {
       const data = await this.EspejoModel.getTriggerModel(); // trae toda la data
