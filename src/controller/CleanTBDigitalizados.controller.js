@@ -45,7 +45,9 @@ class CleanTBDigitalizadosController {
 
           console.log('tiene_pedidos', tiene_pedidos);
           if (tiene_pedidos.length === 0) { // si no hay pedidos termina la ejecucion
-            return res.status(401).json({
+            // const preliquidacion = [ ...new Set(actualizaciones_comprobantes.map(key => key.PRE_LIQUIDACION))];
+            // const responseActualizados = await this.CleanTBDigitalizadosModel.updateAuthPagadosMomModel(preliquidacion);
+            return res.status(200).json({
               message: "no hay pedidos",
               data,
               tiene_pedidos,
@@ -54,6 +56,7 @@ class CleanTBDigitalizadosController {
 
           const all_pedidos = await this.CleanTBDigitalizadosModel.getAllPedidosPagadosMadreModel(tiene_pedidos);
           console.log('cantidad pedidos madre', all_pedidos.length);
+          console.log('pedido 1', all_pedidos[0].TB_PEDIDOS_BARCODE_CAJA);
 
           const data_to_insert = all_pedidos.map((codigos) => {
             return [
@@ -179,6 +182,8 @@ class CleanTBDigitalizadosController {
             ];
           });
 
+          console.log('primer dato a insertar', data_to_insert[0]);
+
           const result_insert = await this.CleanTBDigitalizadosModel.InsertEspejo(data_to_insert)
           console.log('result_insert', result_insert);
 
@@ -188,6 +193,15 @@ class CleanTBDigitalizadosController {
           console.log('barcodes', barcodes);
           const preliquidacion = [ ...new Set(all_pedidos_espejo.map(key => key.PRE_LIQUIDACION))];
           console.log('preliquidacion', preliquidacion);
+
+          if (barcodes.length === 0) {
+            return res.status(200).json({
+              message: "no hay barcodes",
+              data,
+              tiene_pedidos
+            });
+          }
+
 
           // elimina los barcodes que ya esten en el espejo
           const responseEliminados = await this.CleanTBDigitalizadosModel.deletePedidosPagadosMadre(barcodes);
